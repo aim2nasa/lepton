@@ -1,4 +1,3 @@
-#include <iostream>
 #include <stdint.h>
 #include <LEPTON_Types.h>
 #include <SPI.h>
@@ -16,9 +15,11 @@ int main(int argc,char* argv[])
 
 	//open spi port
 	SpiOpenPort(0);
+	printf("SPI opened\n");
 
 	while(true) {
 
+		printf("<");
 		//read data packets from lepton over SPI
 		int resets = 0;
 		for(int j=0;j<PACKETS_PER_FRAME;j++) {
@@ -36,8 +37,9 @@ int main(int argc,char* argv[])
 					usleep(750000);
 					SpiOpenPort(0);
 				}
-																																						}
+			}
 		}
+		printf("1");
 		if(resets >= 30) {
 			fprintf(stderr,"done reading, resets: %d\n",resets);
 		}
@@ -48,17 +50,18 @@ int main(int argc,char* argv[])
 		uint16_t minValue = 65535;
 		uint16_t maxValue = 0;
 
+		
 		for(int i=0;i<FRAME_SIZE_UINT16;i++) {
 			//skip the first 2 uint16_t's of every packet, they're 4 header bytes
 			if(i % PACKET_SIZE_UINT16 < 2) {
 				continue;
 			}
-																													
+			
 			//flip the MSB and LSB at the last second
 			int temp = result[i*2];
 			result[i*2] = result[i*2+1];
 			result[i*2+1] = temp;
-																																					
+			
 			value = frameBuffer[i];
 			if(value > maxValue) {
 				maxValue = value;
@@ -68,28 +71,32 @@ int main(int argc,char* argv[])
 			}
 			column = i % PACKET_SIZE_UINT16 - 2;
 			row = i / PACKET_SIZE_UINT16 ;
-																																																				}
-			float diff = maxValue - minValue;
-			float scale = 255/diff;
-			//QRgb color;
-			for(int i=0;i<FRAME_SIZE_UINT16;i++) {
-				if(i % PACKET_SIZE_UINT16 < 2) {
-					continue;
-				}
-				value = (frameBuffer[i] - minValue) * scale;
-				const int *colormap = colormap_ironblack;
-				//color = qRgb(colormap[3*value], colormap[3*value+1], colormap[3*value+2]);
-				column = (i % PACKET_SIZE_UINT16 ) - 2;
-				row = i / PACKET_SIZE_UINT16;
-				//myImage.setPixel(column, row, color);
-			}
+		}
+		printf("2");
 
-			//lets emit the signal for update
-			//emit updateImage(myImage);
+		float diff = maxValue - minValue;
+		float scale = 255/diff;
+		//QRgb color;
+		for(int i=0;i<FRAME_SIZE_UINT16;i++) {
+			if(i % PACKET_SIZE_UINT16 < 2) {
+				continue;
+			}
+			value = (frameBuffer[i] - minValue) * scale;
+			const int *colormap = colormap_ironblack;
+			//color = qRgb(colormap[3*value], colormap[3*value+1], colormap[3*value+2]);
+			column = (i % PACKET_SIZE_UINT16 ) - 2;
+			row = i / PACKET_SIZE_UINT16;
+			//myImage.setPixel(column, row, color);
+		}
+		printf(">");
+
+		//lets emit the signal for update
+		//emit updateImage(myImage);
 	}
 	//finally, close SPI port just bcuz
 	SpiClosePort(0);
+	printf("SPI closed\n");
 
-	std::cout<<"program end"<<std::endl;
+	printf("program end\n");
 	return 0;
 }
