@@ -5,7 +5,7 @@ CXXFLAGS        = -pipe -O2 -Wall -W -D_REENTRANT $(DEFINES)
 INCPATH       = -I/home/pi/lepton/common -I/home/pi/lepton/leptonSDKEmb32PUB -I.
 LINK          = g++
 LFLAGS        = -Wl,-O1
-LIBS          = -L/home/pi/lepton/leptonSDKEmb32PUB/Debug
+LIBS          = -L/home/pi/lepton/leptonSDKEmb32PUB/Debug -lbmp
 DEL_FILE		  = rm -f
 
 ####### Output directory

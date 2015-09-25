@@ -2,6 +2,7 @@
 #include <LEPTON_Types.h>
 #include <SPI.h>
 #include <Palettes.h>
+#include <bmpfile.h>
 
 #define PACKET_SIZE 164
 #define PACKET_SIZE_UINT16 (PACKET_SIZE/2)
@@ -44,6 +45,7 @@ int main(int argc,char* argv[])
 	SpiOpenPort(0);
 	if(fp) fprintf(stderr,"SPI opened\n");
 
+	int loop=0;
 	while(true) {
 
 		if(fp) fprintf(stderr,"<");
@@ -104,6 +106,11 @@ int main(int argc,char* argv[])
 		float diff = maxValue - minValue;
 		float scale = 255/diff;
 		//QRgb color;
+
+		bmpfile_t *bmp = NULL;
+		if(format=='b') bmp = bmp_create(80,60,8);
+		rgb_pixel_t pixel = {0,0,0,0};
+
 		for(int i=0;i<FRAME_SIZE_UINT16;i++) {
 			if(i % PACKET_SIZE_UINT16 < 2) {
 				continue;
@@ -114,11 +121,23 @@ int main(int argc,char* argv[])
 			column = (i % PACKET_SIZE_UINT16 ) - 2;
 			row = i / PACKET_SIZE_UINT16;
 			//myImage.setPixel(column, row, color);
+
+			if(bmp){
+				pixel.red = colormap[3*value+0];
+				pixel.green = colormap[3*value+1];
+				pixel.blue = colormap[3*value+2];
+				bmp_set_pixel(bmp,row,column,pixel);
+			}
 		}
+		char bmpFile[128];
+		sprintf(bmpFile,"%s-%d.bmp",filename.c_str(),loop);
+		bmp_save(bmp,bmpFile);
+		bmp_destroy(bmp);
 		if(fp) fprintf(stderr,">");
 
 		//lets emit the signal for update
 		//emit updateImage(myImage);
+		loop++;
 	}
 	//finally, close SPI port just bcuz
 	SpiClosePort(0);
