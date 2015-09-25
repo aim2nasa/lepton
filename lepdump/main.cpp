@@ -132,7 +132,7 @@ int main(int argc,char* argv[])
 			pixel.red = colormap[3*value+0];
 			pixel.green = colormap[3*value+1];
 			pixel.blue = colormap[3*value+2];
-			bmp_set_pixel(bmp,row,column,pixel);
+			bmp_set_pixel(bmp,column,row,pixel);
 		}
 		if(bStdout){
 			dump(bmp,format,stdout);
