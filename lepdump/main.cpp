@@ -10,9 +10,9 @@
 
 void usage()
 {
-	printf("usage: lepdump <format> <filename>\n");
-	printf("\t<format> r:raw data(RGB),b:BMP format\n");
-	printf("\t<filename> output file name, if set as '-', the stream goes to stdout\n");
+	fprintf(stderr,"usage: lepdump <format> <filename>\n");
+	fprintf(stderr,"\t<format> r:raw data(RGB),b:BMP format\n");
+	fprintf(stderr,"\t<filename> output file name, if set as '-', the stream goes to stdout\n");
 }
 
 int main(int argc,char* argv[])
@@ -24,25 +24,25 @@ int main(int argc,char* argv[])
 
 	char format=*argv[1];
 	if(format!='r' && format!='b') {
-		printf("<format> %c not exist\n",format);
+		fprintf(stderr,"<format> %c not exist\n",format);
 		usage();
 		return -1;
 	}
-	printf("<format>=%c\n",format);
+	fprintf(stderr,"<format>=%c\n",format);
 
 	std::string filename=argv[2];
-	printf("<filename>=%s\n",filename.c_str());
+	fprintf(stderr,"<filename>=%s\n",filename.c_str());
 
 	uint8_t result[PACKET_SIZE*PACKETS_PER_FRAME];
 	uint16_t *frameBuffer;
 
 	//open spi port
 	SpiOpenPort(0);
-	printf("SPI opened\n");
+	fprintf(stderr,"SPI opened\n");
 
 	while(true) {
 
-		printf("<");
+		fprintf(stderr,"<");
 		//read data packets from lepton over SPI
 		int resets = 0;
 		for(int j=0;j<PACKETS_PER_FRAME;j++) {
@@ -62,7 +62,7 @@ int main(int argc,char* argv[])
 				}
 			}
 		}
-		printf("1");
+		fprintf(stderr,"1");
 		if(resets >= 30) {
 			fprintf(stderr,"done reading, resets: %d\n",resets);
 		}
@@ -95,7 +95,7 @@ int main(int argc,char* argv[])
 			column = i % PACKET_SIZE_UINT16 - 2;
 			row = i / PACKET_SIZE_UINT16 ;
 		}
-		printf("2");
+		fprintf(stderr,"2");
 
 		float diff = maxValue - minValue;
 		float scale = 255/diff;
@@ -111,15 +111,15 @@ int main(int argc,char* argv[])
 			row = i / PACKET_SIZE_UINT16;
 			//myImage.setPixel(column, row, color);
 		}
-		printf(">");
+		fprintf(stderr,">");
 
 		//lets emit the signal for update
 		//emit updateImage(myImage);
 	}
 	//finally, close SPI port just bcuz
 	SpiClosePort(0);
-	printf("SPI closed\n");
+	fprintf(stderr,"SPI closed\n");
 
-	printf("program end\n");
+	fprintf(stderr,"program end\n");
 	return 0;
 }
