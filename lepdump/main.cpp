@@ -138,7 +138,7 @@ int main(int argc,char* argv[])
 			dump(bmp,format,stdout);
 		}else{
 			char bmpFile[256];
-			sprintf(bmpFile,"%s-%d.bmp",filename.c_str(),loop);
+			sprintf(bmpFile,"%s-%d.%s",filename.c_str(),loop,(format=='r')?"raw":"bmp");
 			FILE *fp = fopen(bmpFile,"wb");
 			dump(bmp,format,fp);
 			fclose(fp);
