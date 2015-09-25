@@ -115,7 +115,7 @@ int main(int argc,char* argv[])
 		//QRgb color;
 
 		bmpfile_t *bmp = NULL;
-		bmp = bmp_create(80,60,8);
+		bmp = bmp_create(80,60,24);
 		rgb_pixel_t pixel = {0,0,0,0};
 
 		for(int i=0;i<FRAME_SIZE_UINT16;i++) {
