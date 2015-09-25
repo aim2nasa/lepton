@@ -28,6 +28,10 @@ int main(int argc,char* argv[])
 		usage();
 		return -1;
 	}
+	printf("<format>=%c\n",format);
+
+	std::string filename=argv[2];
+	printf("<filename>=%s\n",filename.c_str());
 
 	uint8_t result[PACKET_SIZE*PACKETS_PER_FRAME];
 	uint16_t *frameBuffer;
