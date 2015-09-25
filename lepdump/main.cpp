@@ -22,30 +22,31 @@ int main(int argc,char* argv[])
 		return -1;
 	}
 
+	FILE *fp=NULL;
+	std::string filename=argv[2];
+	if(filename!="-") fp = fopen(filename.c_str(),"wb");
+	//fp!=NULL means stream goes to file, fp=NULL means stream goes to stdout
+
 	char format=*argv[1];
 	if(format!='r' && format!='b') {
 		fprintf(stderr,"<format> %c not exist\n",format);
 		usage();
 		return -1;
 	}
-	fprintf(stderr,"<format>=%c\n",format);
 
-	std::string filename=argv[2];
-	fprintf(stderr,"<filename>=%s\n",filename.c_str());
-
-	FILE *fp=NULL;
-	if(filename!="-") fp = fopen(filename.c_str(),"wb");
+	if(fp) fprintf(stderr,"<format>=%c\n",format);
+	if(fp) fprintf(stderr,"<filename>=%s\n",filename.c_str());
 
 	uint8_t result[PACKET_SIZE*PACKETS_PER_FRAME];
 	uint16_t *frameBuffer;
 
 	//open spi port
 	SpiOpenPort(0);
-	fprintf(stderr,"SPI opened\n");
+	if(fp) fprintf(stderr,"SPI opened\n");
 
 	while(true) {
 
-		fprintf(stderr,"<");
+		if(fp) fprintf(stderr,"<");
 		//read data packets from lepton over SPI
 		int resets = 0;
 		for(int j=0;j<PACKETS_PER_FRAME;j++) {
@@ -65,9 +66,9 @@ int main(int argc,char* argv[])
 				}
 			}
 		}
-		fprintf(stderr,"1");
+		if(fp) fprintf(stderr,"1");
 		if(resets >= 30) {
-			fprintf(stderr,"done reading, resets: %d\n",resets);
+			if(fp) fprintf(stderr,"done reading, resets: %d\n",resets);
 		}
 
 		frameBuffer = (uint16_t *)result;
@@ -98,7 +99,7 @@ int main(int argc,char* argv[])
 			column = i % PACKET_SIZE_UINT16 - 2;
 			row = i / PACKET_SIZE_UINT16 ;
 		}
-		fprintf(stderr,"2");
+		if(fp) fprintf(stderr,"2");
 
 		float diff = maxValue - minValue;
 		float scale = 255/diff;
@@ -114,7 +115,7 @@ int main(int argc,char* argv[])
 			row = i / PACKET_SIZE_UINT16;
 			//myImage.setPixel(column, row, color);
 		}
-		fprintf(stderr,">");
+		if(fp) fprintf(stderr,">");
 
 		//lets emit the signal for update
 		//emit updateImage(myImage);
@@ -122,8 +123,8 @@ int main(int argc,char* argv[])
 	//finally, close SPI port just bcuz
 	SpiClosePort(0);
 	fclose(fp);
-	fprintf(stderr,"SPI closed\n");
+	if(fp) fprintf(stderr,"SPI closed\n");
 
-	fprintf(stderr,"program end\n");
+	if(fp) fprintf(stderr,"program end\n");
 	return 0;
 }
