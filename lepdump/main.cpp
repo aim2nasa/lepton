@@ -16,6 +16,14 @@ void usage()
 	fprintf(stderr,"\t<filename> output file name, if set as '-', the stream goes to stdout\n");
 }
 
+void dump(bmpfile_t *bmp,char format,FILE *fp)
+{
+	if(format=='r') //raw
+		bmp_write_pixels(bmp,fp);
+	else if(format=='b') //bmp
+		bmp_save_to(bmp,fp);
+}
+
 int main(int argc,char* argv[])
 {
 	if(argc<3){
@@ -23,10 +31,9 @@ int main(int argc,char* argv[])
 		return -1;
 	}
 
-	FILE *fp=NULL;
+	bool bStdout = true;
 	std::string filename=argv[2];
-	if(filename!="-") fp = fopen(filename.c_str(),"wb");
-	//fp!=NULL means stream goes to file, fp=NULL means stream goes to stdout
+	if(filename!="-") bStdout=false;
 
 	char format=*argv[1];
 	if(format!='r' && format!='b') {
@@ -35,20 +42,20 @@ int main(int argc,char* argv[])
 		return -1;
 	}
 
-	if(fp) fprintf(stderr,"<format>=%c\n",format);
-	if(fp) fprintf(stderr,"<filename>=%s\n",filename.c_str());
+	if(!bStdout) fprintf(stderr,"<format>=%c\n",format);
+	if(!bStdout) fprintf(stderr,"<filename>=%s\n",filename.c_str());
 
 	uint8_t result[PACKET_SIZE*PACKETS_PER_FRAME];
 	uint16_t *frameBuffer;
 
 	//open spi port
 	SpiOpenPort(0);
-	if(fp) fprintf(stderr,"SPI opened\n");
+	if(!bStdout) fprintf(stderr,"SPI opened\n");
 
 	int loop=0;
 	while(true) {
 
-		if(fp) fprintf(stderr,"<");
+		if(!bStdout) fprintf(stderr,"<");
 		//read data packets from lepton over SPI
 		int resets = 0;
 		for(int j=0;j<PACKETS_PER_FRAME;j++) {
@@ -68,9 +75,9 @@ int main(int argc,char* argv[])
 				}
 			}
 		}
-		if(fp) fprintf(stderr,"1");
+		if(!bStdout) fprintf(stderr,"1");
 		if(resets >= 30) {
-			if(fp) fprintf(stderr,"done reading, resets: %d\n",resets);
+			if(!bStdout) fprintf(stderr,"done reading, resets: %d\n",resets);
 		}
 
 		frameBuffer = (uint16_t *)result;
@@ -101,7 +108,7 @@ int main(int argc,char* argv[])
 			column = i % PACKET_SIZE_UINT16 - 2;
 			row = i / PACKET_SIZE_UINT16 ;
 		}
-		if(fp) fprintf(stderr,"2");
+		if(!bStdout) fprintf(stderr,"2");
 
 		float diff = maxValue - minValue;
 		float scale = 255/diff;
@@ -122,18 +129,22 @@ int main(int argc,char* argv[])
 			row = i / PACKET_SIZE_UINT16;
 			//myImage.setPixel(column, row, color);
 
-			if(bmp){
-				pixel.red = colormap[3*value+0];
-				pixel.green = colormap[3*value+1];
-				pixel.blue = colormap[3*value+2];
-				bmp_set_pixel(bmp,row,column,pixel);
-			}
+			pixel.red = colormap[3*value+0];
+			pixel.green = colormap[3*value+1];
+			pixel.blue = colormap[3*value+2];
+			bmp_set_pixel(bmp,row,column,pixel);
 		}
-		char bmpFile[128];
-		sprintf(bmpFile,"%s-%d.bmp",filename.c_str(),loop);
-		bmp_save(bmp,bmpFile);
+		if(bStdout){
+			dump(bmp,format,stdout);
+		}else{
+			char bmpFile[256];
+			sprintf(bmpFile,"%s-%d.bmp",filename.c_str(),loop);
+			FILE *fp = fopen(bmpFile,"wb");
+			dump(bmp,format,fp);
+			fclose(fp);
+		}
 		bmp_destroy(bmp);
-		if(fp) fprintf(stderr,">");
+		if(!bStdout) fprintf(stderr,">");
 
 		//lets emit the signal for update
 		//emit updateImage(myImage);
@@ -141,9 +152,8 @@ int main(int argc,char* argv[])
 	}
 	//finally, close SPI port just bcuz
 	SpiClosePort(0);
-	fclose(fp);
-	if(fp) fprintf(stderr,"SPI closed\n");
+	if(!bStdout) fprintf(stderr,"SPI closed\n");
 
-	if(fp) fprintf(stderr,"program end\n");
+	if(!bStdout) fprintf(stderr,"program end\n");
 	return 0;
 }
