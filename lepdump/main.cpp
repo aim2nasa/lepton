@@ -33,6 +33,9 @@ int main(int argc,char* argv[])
 	std::string filename=argv[2];
 	fprintf(stderr,"<filename>=%s\n",filename.c_str());
 
+	FILE *fp=NULL;
+	if(filename!="-") fp = fopen(filename.c_str(),"wb");
+
 	uint8_t result[PACKET_SIZE*PACKETS_PER_FRAME];
 	uint16_t *frameBuffer;
 
@@ -118,6 +121,7 @@ int main(int argc,char* argv[])
 	}
 	//finally, close SPI port just bcuz
 	SpiClosePort(0);
+	fclose(fp);
 	fprintf(stderr,"SPI closed\n");
 
 	fprintf(stderr,"program end\n");
