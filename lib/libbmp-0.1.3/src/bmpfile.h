@@ -136,6 +136,9 @@ bool bmp_set_pixel(bmpfile_t *bmp, uint32_t x, uint32_t y, rgb_pixel_t pixel);
 
 bool bmp_save(bmpfile_t *bmp, const char *filename);
 
+void bmp_save_to(bmpfile_t *bmp, FILE *fp);
+void bmp_write_pixels(bmpfile_t *bmp, FILE *fp);
+
 BMP_END_DECLS
 
 #endif /* __bmpfile_h__ */

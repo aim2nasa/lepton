@@ -708,3 +708,87 @@ bmp_save(bmpfile_t *bmp, const char *filename)
 
   return TRUE;
 }
+
+void
+bmp_write_pixels(bmpfile_t *bmp, FILE *fp)
+{
+  int row;
+  unsigned char *buf;
+
+  if (bmp->dib.depth == 16) {
+    uint32_t data_bytes = bmp->dib.width * 2;
+    uint32_t padding_bytes = 4 - data_bytes % 4;
+
+    for (row = bmp->dib.height - 1; row >= 0; --row) {
+      int i;
+      unsigned char zero_byte = 0;
+      uint32_t write_number = 0;
+
+      for (i = 0; write_number < data_bytes; ++i, write_number += 2) {
+	uint16_t red = (uint16_t)(bmp->pixels[i][row].red / 8);
+	uint16_t green = (uint16_t)(bmp->pixels[i][row].green / 4);
+	uint16_t blue = (uint16_t)(bmp->pixels[i][row].blue / 8);
+	uint16_t value = (red << 11) + (green << 5) + blue;
+
+	if (_is_big_endian()) value = UINT16_SWAP_LE_BE_CONSTANT(value);
+	fwrite(&value, sizeof(uint16_t), 1, fp);
+      }
+
+      for (write_number = 0; write_number < padding_bytes; ++write_number)
+	fwrite(&zero_byte, 1, 1, fp);
+    }
+  }
+  else {
+    double bytes_per_pixel;
+    int bytes_per_line;
+
+    bytes_per_pixel = (bmp->dib.depth * 1.0) / 8.0;
+    bytes_per_line = (int)ceil(bytes_per_pixel * bmp->dib.width);
+    if (bytes_per_line % 4 != 0)
+      bytes_per_line += 4 - bytes_per_line % 4;
+
+    buf = malloc(bytes_per_line);
+
+    for (row = bmp->dib.height - 1; row >= 0; --row) {
+      memset(buf, 0, bytes_per_line);
+
+      switch (bmp->dib.depth) {
+      case 1:
+	bmp_get_row_data_for_1(bmp, buf, bytes_per_line, row);
+	break;
+
+      case 4:
+	bmp_get_row_data_for_4(bmp, buf, bytes_per_line, row);
+	break;
+
+      case 8:
+	bmp_get_row_data_for_8(bmp, buf, bytes_per_line, row);
+	break;
+
+      case 24:
+	bmp_get_row_data_for_24(bmp, buf, bytes_per_line, row);
+	break;
+
+      case 32:
+	bmp_get_row_data_for_32(bmp, buf, bytes_per_line, row);
+	break;
+      }
+
+      fwrite(buf, bytes_per_line, 1, fp);
+    }
+    free(buf);
+  }	
+}
+
+void
+bmp_save_to(bmpfile_t *bmp, FILE *fp)
+{
+  int row;
+  unsigned char *buf;
+
+  /* Write the file */
+  bmp_write_header(bmp, fp);
+  bmp_write_dib(bmp, fp);
+  bmp_write_palette(bmp, fp);
+  bmp_write_pixels(bmp,fp);
+}
