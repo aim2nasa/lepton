@@ -8,8 +8,27 @@
 #define PACKETS_PER_FRAME 60
 #define FRAME_SIZE_UINT16 (PACKET_SIZE_UINT16*PACKETS_PER_FRAME)
 
+void usage()
+{
+	printf("usage: lepdump <format> <filename>\n");
+	printf("\t<format> r:raw data(RGB),b:BMP format\n");
+	printf("\t<filename> output file name, if set as '-', the stream goes to stdout\n");
+}
+
 int main(int argc,char* argv[])
 {
+	if(argc<3){
+		usage();
+		return -1;
+	}
+
+	char format=*argv[1];
+	if(format!='r' && format!='b') {
+		printf("<format> %c not exist\n",format);
+		usage();
+		return -1;
+	}
+
 	uint8_t result[PACKET_SIZE*PACKETS_PER_FRAME];
 	uint16_t *frameBuffer;
 
